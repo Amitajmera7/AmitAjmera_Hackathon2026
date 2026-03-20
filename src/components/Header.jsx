@@ -10,7 +10,7 @@ export function Header() {
               Call intelligence OS
             </p>
             <h1 className="truncate text-lg font-black tracking-tight text-slate-900 transition group-hover:text-indigo-700 sm:text-xl">
-              Control Center
+              Call Intelligence Center
             </h1>
           </Link>
         </div>
