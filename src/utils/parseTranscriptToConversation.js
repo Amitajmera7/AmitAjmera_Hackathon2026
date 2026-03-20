@@ -87,49 +87,37 @@ export function parseTranscriptToConversation(transcript, options = {}) {
   }
   if (current) raw.push(current);
 
-  let segments = raw.flatMap((r, i) => {
-    let role = r.role;
-    if (role === "unknown") {
-      role = i % 2 === 0 ? "agent" : "customer";
-    }
-    const chunks = splitIntoConversationChunks(cleanTranscriptText(r.text));
-    return chunks.map((chunk, j) => ({
-      id: `seg-${i}-${j}`,
-      speakerLabel: r.speakerLabel,
-      role,
-      text: chunk,
-      timestamp: r.timestamp,
-      startSeconds: 0,
-      endSeconds: 0,
-    }));
-  });
-
-  if (segments.length === 0) {
-    const chunks = text
-      .split(/\n+/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    segments = chunks.flatMap((t, i) => {
-      const split = splitIntoConversationChunks(cleanTranscriptText(t));
-      return split.map((chunk, j) => ({
-        id: `alt-${i}-${j}`,
-        speakerLabel: i % 2 === 0 ? "Agent" : "Customer",
-        role: i % 2 === 0 ? "agent" : "customer",
+  let segments = [];
+  if (explicitSpeakerLineCount > 0) {
+    const labelRoleMap = new Map();
+    /** @type {'agent' | 'customer'} */
+    let nextUnknownRole = "agent";
+    segments = raw.flatMap((r, i) => {
+      let role = r.role;
+      if (role === "unknown") {
+        const key = String(r.speakerLabel || "").trim().toLowerCase();
+        const mapped = labelRoleMap.get(key);
+        if (mapped) {
+          role = mapped;
+        } else {
+          role = nextUnknownRole;
+          labelRoleMap.set(key, role);
+          nextUnknownRole = nextUnknownRole === "agent" ? "customer" : "agent";
+        }
+      }
+      const chunks = splitIntoConversationChunks(cleanTranscriptText(r.text));
+      return chunks.map((chunk, j) => ({
+        id: `seg-${i}-${j}`,
+        speakerLabel: role === "agent" ? "Agent" : "Customer",
+        role,
         text: chunk,
-        timestamp: null,
+        timestamp: r.timestamp,
         startSeconds: 0,
         endSeconds: 0,
       }));
     });
-  }
-
-  // If transcript had no explicit "Speaker:" lines, force readable dialogue flow.
-  if (explicitSpeakerLineCount === 0 && segments.length > 0) {
-    segments = segments.map((seg, i) => ({
-      ...seg,
-      role: i % 2 === 0 ? "agent" : "customer",
-      speakerLabel: i % 2 === 0 ? "Agent" : "Customer",
-    }));
+  } else {
+    segments = buildFallbackTurns(text);
   }
 
   const total =
@@ -239,6 +227,71 @@ function splitIntoConversationChunks(text) {
     }
   }
   return out.filter(Boolean);
+}
+
+/** @param {string} transcript */
+function buildFallbackTurns(transcript) {
+  const cleaned = cleanTranscriptText(transcript);
+  const sentences = cleaned
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!sentences.length) return [];
+
+  /** @type {{ role: 'agent' | 'customer', speakerLabel: string, text: string, timestamp: null, startSeconds: number, endSeconds: number }[]} */
+  const turns = [];
+  /** @type {'agent' | 'customer'} */
+  let role = "agent";
+
+  for (let i = 0; i < sentences.length; ) {
+    const bucket = [sentences[i]];
+    let chars = sentences[i].length;
+    i += 1;
+
+    while (i < sentences.length && bucket.length < 4) {
+      const next = sentences[i];
+      const prev = bucket[bucket.length - 1];
+      const enoughForTurn = bucket.length >= 2 && chars >= 190;
+      const maxed = bucket.length >= 3 && chars >= 280;
+
+      if (maxed) break;
+      if (enoughForTurn && isResponseStarter(next) && !isContinuation(next)) break;
+      if (/[?]$/.test(prev) && isResponseStarter(next)) break;
+
+      bucket.push(next);
+      chars += next.length + 1;
+      i += 1;
+    }
+
+    const textParts = splitIntoConversationChunks(bucket.join(" "));
+    for (const part of textParts) {
+      turns.push({
+        role,
+        speakerLabel: role === "agent" ? "Agent" : "Customer",
+        text: part,
+        timestamp: null,
+        startSeconds: 0,
+        endSeconds: 0,
+      });
+    }
+    role = role === "agent" ? "customer" : "agent";
+  }
+
+  return turns.map((t, idx) => ({ ...t, id: `alt-${idx}` }));
+}
+
+/** @param {string} sentence */
+function isResponseStarter(sentence) {
+  return /^(yes|yeah|yep|no|nah|we|our|i\s*('| a)m|i am|we\s*('| a)re|we are|i need|i want|i'm looking|our budget)\b/i.test(
+    sentence.trim()
+  );
+}
+
+/** @param {string} sentence */
+function isContinuation(sentence) {
+  return /^(great|perfect|got it|that makes sense|sure|right|okay|ok|also|and|so)\b/i.test(
+    sentence.trim()
+  );
 }
 
 /**

@@ -1,0 +1,283 @@
+# 📞 Call Intelligence Dashboard
+
+An AI-powered call analysis platform that allows users to upload call recordings (`.wav` / `.mp3`), automatically transcribe them, and generate actionable insights such as sentiment, key moments, talk ratio, and follow-up actions.
+
+---
+
+## 🚀 Features
+
+### 🎧 Audio Processing
+
+* Fast and optimized upload pipeline
+* Server-side transcription using OpenAI
+
+### 📝 Smart Transcription
+
+* Conversational transcript (Agent vs Customer)
+* Timestamped dialogue view
+* Highlighted keywords & key phrases
+
+### 🤖 AI Insights
+
+* Sentiment analysis (Positive / Neutral / Negative)
+* Talk ratio (Agent vs Customer)
+* Key objections & highlights
+* AI-generated summary
+* Follow-up action items
+
+### 📊 Dashboards
+
+#### 🏠 Main Dashboard
+
+* Total calls processed
+* Sentiment distribution
+* Average call score
+* Average call duration
+* Top keywords
+* Action items summary
+
+#### 📞 Individual Call Dashboard
+
+* Conversational transcript
+* Audio playback with timeline
+* Talk-time visualization
+* Agent performance scoring:
+
+  * Communication clarity
+  * Politeness
+  * Business knowledge
+  * Problem handling
+  * Listening ability
+* Business questionnaire coverage
+* Keyword insights
+* AI-generated notes & observations
+
+---
+
+## 🏗️ Tech Stack
+
+### Frontend
+
+* React (Vite)
+* Tailwind CSS (UI styling)
+* Modern component-based architecture
+
+### Backend
+
+* Node.js + Express
+* REST APIs
+* File upload handling (FormData)
+
+### AI / Processing
+
+* OpenAI API (Speech-to-Text)
+* Custom logic for:
+
+  * Conversation parsing
+  * Sentiment detection
+  * Keyword extraction
+  * Insight generation
+
+---
+
+## 📂 Project Structure
+
+```
+call-analysis-dashboard/
+│
+├── client/                     # Frontend (React + Vite)
+│   ├── src/
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/             # Dashboard & call detail pages
+│   │   ├── api/               # API service layer
+│   │   ├── hooks/             # Custom hooks
+│   │   ├── utils/             # Helper functions
+│   │   └── styles/            # Global styles
+│   └── index.html
+│
+├── server/                    # Backend (Node.js)
+│   ├── services/
+│   │   ├── transcription.js   # OpenAI transcription logic
+│   │   ├── analysis.js        # AI insights generation
+│   │   └── parser.js          # Conversation parsing logic
+│   │
+│   ├── routes/
+│   │   └── transcribe.js      # /api/transcribe endpoint
+│   │
+│   ├── utils/
+│   │   └── fileHandler.js     # Upload handling
+│   │
+│   ├── index.js               # Server entry point
+│   └── .env                   # Environment variables
+│
+├── package.json
+└── README.md
+```
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd call-analysis-dashboard
+```
+
+---
+
+### 2️⃣ Setup Backend (Server)
+
+```bash
+cd server
+npm install
+```
+
+Create `.env` file inside `/server`:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+PORT=8787
+```
+
+Start server:
+
+```bash
+npm run dev
+```
+
+Verify server:
+
+👉 http://localhost:8787/api/health
+
+---
+
+### 3️⃣ Setup Frontend (Client)
+
+```bash
+cd ../client
+npm install
+npm run dev
+```
+
+Frontend runs at:
+
+👉 http://localhost:5173
+
+---
+
+## 🔗 API Endpoints
+
+### Health Check
+
+```
+GET /api/health
+```
+
+### Transcription API
+
+```
+POST /api/transcribe
+Content-Type: multipart/form-data
+
+Body:
+- audio: file (.wav / .mp3)
+```
+
+Response:
+
+```json
+{
+  "transcript": "...",
+  "analysis": {
+    "sentiment": "positive",
+    "talkRatio": {...},
+    "keywords": [...],
+    "actions": [...]
+  }
+}
+```
+
+---
+
+## 🧠 Key Architecture Concepts
+
+### 1. Dual Server Setup
+
+* **Frontend (Vite)** → Port `5173`
+* **Backend (Node)** → Port `8787`
+* Connected via proxy (`/api`)
+
+---
+
+### 2. Processing Pipeline
+
+```
+Upload Audio
+   ↓
+Server receives file
+   ↓
+OpenAI transcription
+   ↓
+Conversation parsing (Agent vs Customer)
+   ↓
+AI analysis (sentiment, keywords, etc.)
+   ↓
+Return structured response
+   ↓
+UI renders dashboards
+```
+
+---
+
+### 3. Conversation Parsing
+
+Custom logic ensures:
+
+* Natural dialogue format
+* Correct speaker grouping
+* Minimal fragmentation
+* Readable conversational flow
+
+---
+
+## ⚡ Performance Optimizations
+
+* Streaming file upload (no blocking UI)
+* Async transcription processing
+* Efficient parsing (sentence grouping)
+* Lazy UI rendering
+* Minimal API payload
+
+---
+
+## 🛠️ Future Improvements
+
+* Real speaker diarization (true Agent vs Customer detection)
+* Real-time transcription
+* Multi-language support
+* Call history persistence (DB)
+* User authentication
+* Export reports (PDF / CSV)
+
+---
+
+## 🧪 Testing Checklist
+
+* Upload `.wav` file → transcription works
+* Upload `.mp3` file → transcription works
+* Transcript shows conversational format
+* AI insights render correctly
+* Dashboard metrics update dynamically
+* API health endpoint returns `ok: true`
+
+---
+
+## 👨‍💻 Author
+
+Built with ❤️ for AI-powered call intelligence and analytics.
+
+---
+
+
